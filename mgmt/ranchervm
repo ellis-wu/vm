@@ -62,6 +62,39 @@ def exit_script(title, msg, code):
     sys.exit(code)
 
 
+if form.getvalue("action") == "import_form":
+    print_html_headers("RancherVM")
+
+    print """
+        <div class="header"><div class="wrapper"><a href="ranchervm"><div class="logo"></div></a></div></div>
+        <div class="wrapper">
+        <h1>Import Image</h1>
+         <button class="create" onclick="location.href='ranchervm'">View Instances</button>
+        <div class="table-wrapper">
+                <div class="wrapper">
+                        <form enctype="multipart/form-data" method="POST" class="form" action="ranchervm">
+                        <input type="hidden" name="action" value="import">
+                        <ul>
+                                <li>
+                                        <label class="label "type="label" for="image">Image</label>
+                                        <input type="text" class="text" name="image" value="" required>
+                                        <div class="input_help">The name of a Docker image built from rancher/osbase</div>
+                                </li>
+                                <li>
+                                        <label class="label "type="label" for="file">File</label>
+                                        <div class="upload">
+                                                <input type="file" name="filepath" required>
+                                        </div>
+                                </li>
+                                <li><button class="form-import">import</button></li>
+                        </ul>
+                        </form>
+                </div>
+        </div>
+""".format(**vars())
+    sys.exit()
+
+
 if form.getvalue("action") == "create_form":
     auto_name = "i-" + "%08x" % random.randint(0, 0xffffffff)
 
@@ -78,28 +111,29 @@ if form.getvalue("action") == "create_form":
                         <input type="hidden" name="action" value="create">
                         <ul>
                                 <li>
-                                        <label  class="label "type="label" for="hostname">Hostname</label>
+                                        <label class="label" type="label" for="hostname">Hostname</label>
                                         <input type="text" class="text" name="hostname" value="{auto_name}">
                                         <div class="input_help">We will attempt to set the VM hostname using DHCP, but not all operating systems will honor it</div>
                                 </li>
                                 <li>
-                                        <label  class="label "type="label" for="hostname">Image</label>
+                                        <label class="label" type="label" for="hostname">Image</label>
                                         <input type="text" class="text" name="image" value="rancher/vm-rancheros">
-					<div class="input_help">The name of a Docker image built from rancher/osbase</div>
+                                        <div class="input_help">The name of a Docker image built from rancher/osbase</div>
                                 </li>
                                 <li>
-                                        <label  class="label "type="label" for="hostname">Memory Size</label>
+                                        <label class="label" type="label" for="hostname">Memory Size</label>
                                         <input type="text" class="text" name="mem" value="512m">
-					<div class="input_help">KVM allows you to provision more memory than the host has, as long as the memory is not in use</div>
+                                        <div class="input_help">KVM allows you to provision more memory than the host has, as long as the memory is not in use</div>
                                 </li>
                                 <li>
                                         <label  class="label "type="label" for="hostname"># of vCPUs</label>
                                         <input type="text" class="text" name="cpu" value="1">
-					<div class="input_help">KVM lets you specify a # of vCPUs larger than # of cores on the host</div>
+                                        <div class="input_help">KVM lets you specify a # of vCPUs larger than # of cores on the host</div>
                                 </li>
                                 <li>
                                         <label  class="label "type="label" for="hostname">Port mapping</label>
-                                        <input type="text" class="text" name="ports" value="80"> <div class="input_help">A comma-separated list of port mappings specified in <span class="input_help_bold">docker run -p</span> command line syntax</div>
+                                        <input type="text" class="text" name="ports" value="80">
+                                        <div class="input_help">A comma-separated list of port mappings specified in <span class="input_help_bold">docker run -p</span> command line syntax</div>
                                 </li>
                                 <li><button class="form-create">Create</button></li>
                         </ul>
@@ -123,7 +157,7 @@ token_patterns = \
 def parse_port_mappings(src_list_str):
     """ Parses a list of comma-separated port mappings."""
 
-    # Each entry in the list takes the docker command line "-p" format. 
+    # Each entry in the list takes the docker command line "-p" format.
     # The result can be passed into the start method of docker-py client
     # library.
 
@@ -156,7 +190,7 @@ def parse_port_mappings(src_list_str):
             expect_token(":")
             container_port = parse_container_port()
             return {container_port : (ip, None)}
-    
+
     def parse_no_ip_port_map():
         """parses hostPort:containerPort | containerPort"""
         port = parse_port()
@@ -170,7 +204,7 @@ def parse_port_mappings(src_list_str):
             container_port = port + "/" + parse_protocol()
             return {container_port : None}
         return {port : None}
-    
+
     def parse_port():
         port = parse_port_number()
 #        type, _ = peek_token()
@@ -179,7 +213,7 @@ def parse_port_mappings(src_list_str):
 #            high_port = parse_port_number()
 #            return port + "-" + high_port
         return port
-    
+
     def parse_container_port():
         port = parse_port()
         type, _ = peek_token()
@@ -187,19 +221,19 @@ def parse_port_mappings(src_list_str):
             get_token()
             return port + "/" + parse_protocol()
         return port
-    
+
     def parse_protocol():
         type, token = get_token()
         if type == "protocol":
             return token
         parse_error("expecting a protocol name")
-    
+
     def parse_port_number():
         type, token = get_token()
         if type == "numbers" and (0 < int(token) < 65536):
             return token
         parse_error("expecting a port number")
-    
+
     def peek_token():
         global src_str
         global next_ptr
@@ -212,22 +246,22 @@ def parse_port_mappings(src_list_str):
         if src_str[next_ptr] == ",": return (",", ",")
         for type, pattern in token_patterns:
             match = pattern.match(src_str[next_ptr:])
-            if match: 
+            if match:
                 return (type, src_str[next_ptr:next_ptr + match.end()])
         parse_error("unexpected charactor: " + src_str[next_ptr])
-    
+
     def get_token():
         global next_ptr
         (type, token) = peek_token()
         next_ptr = next_ptr + len(token)
         return (type, token)
-    
+
     def expect_token(type):
         token_type, token = get_token()
         if token_type != type:
             parse_error("expecting " + type)
         return token
-    
+
     def parse_error(msg):
         global next_ptr
         raise Exception(msg + " at charactor " + str(next_ptr + 1))
@@ -238,6 +272,21 @@ def parse_port_mappings(src_list_str):
 def get_my_id():
     cmd = 'grep "/docker" /proc/self/cgroup | cut -f 3 -d / | cut -f 2 -d - | cut -f 1 -d . | head -1'
     return subprocess.check_output(["bash", "-c", cmd]).rstrip()
+
+if form.getvalue("action") == "import":
+    image = form.getvalue("image")
+    fileitem = form["filepath"]
+
+    def check_image(image):
+        if re.compile("[^a-zA-Z\d\-\.\/:]").search(image):
+           exit_script("Input validation failed", "Bad image name", 1)
+
+    check_image(image)
+
+    if fileitem.filename:
+        fn = os.path.basename(fileitem.filename)
+        open('/tmp/' + fn, 'wb').write(fileitem.file.read())
+        exit_script("Imported", "Image " + image + " imported", 0)
 
 if form.getvalue("action") == "create":
     hostname = form.getvalue('hostname')
@@ -251,7 +300,7 @@ if form.getvalue("action") == "create":
            re.compile("[^a-zA-Z\d\-]").search(hostname):
            exit_script("Input validation failed",
                        "Hostname must be an alpha numerical" \
-                       " string up to 16 characters long ('-' allowed).", 1) 
+                       " string up to 16 characters long ('-' allowed).", 1)
 
     def check_image(image):
         if re.compile("[^a-zA-Z\d\-\.\/:]").search(image):
@@ -323,8 +372,8 @@ if form.getvalue("action") == "start":
     # Read port mappings from HostConfig
     port_bindings = container_details.get("HostConfig").get("PortBindings")
     def txform(x):
-        host_ip = x[0].get("HostIp") 
-        host_port = x[0].get("HostPort") 
+        host_ip = x[0].get("HostIp")
+        host_port = x[0].get("HostPort")
         if host_ip == "" and host_port == "":
             return None
         if host_ip == "":
@@ -362,7 +411,7 @@ container_details_list = sorted(filter(lambda e: u'RANCHER_VM=true' in e.get("Co
                                        filter(lambda c: c.get("Config").get("Env") is not None,
                                               map(docker_client.inspect_container,[id for id in containers.keys()]))),
                                 key=lambda c: c.get("State").get("StartedAt"),
-                                reverse=True) 
+                                reverse=True)
 
 print_html_headers("RancherVM")
 
@@ -374,6 +423,7 @@ if container_details_list == []:
         <div class="wrapper">
                 <h1>Instances</h1>
                 <button class="create" onclick="location.href='ranchervm?action=create_form'">Create Instance</button>
+                <button class="import" onclick="location.href='ranchervm?action=import_form'">Import Image</button>
 
           <div class="table-wrapper">
                 <div class="wrapper">
@@ -394,6 +444,7 @@ else:
         <div class="wrapper">
                 <h1>Instances</h1>
                 <button class="create" onclick="location.href='ranchervm?action=create_form'">Create Instance</button>
+                <button class="import" onclick="location.href='ranchervm?action=import_form'">Import Image</button>
                 <div class="table-wrapper">
                         <div class="wrapper">
                                 <table width="100%">
@@ -417,8 +468,8 @@ else:
         else:
            ip = ""
         protocol = mapping.get("Type")
-        if not protocol or protocol == "tcp": 
-            protocol = "" 
+        if not protocol or protocol == "tcp":
+            protocol = ""
         else:
             protocol = "/" + protocol
         return ip + str(mapping.get("PublicPort")) + ":" \
