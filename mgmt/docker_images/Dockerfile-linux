@@ -1,0 +1,2 @@
+FROM rancher/vm-base:0.0.3
+COPY {QCOW_IMAGE} /base_image/{QCOW_IMAGE}

@@ -10,6 +10,7 @@ ENV RANCHER_HOME /var/lib/rancher
 COPY self.pem $RANCHER_HOME/
 
 ADD $VNC.tar.gz $RANCHER_HOME/
+COPY docker_images/ $RANCHER_HOME/$VNC/docker_images/
 COPY css/rancherVM.css $RANCHER_HOME/$VNC/css/
 COPY ranchervm_logo.png $RANCHER_HOME/$VNC/images/
 COPY index.html $RANCHER_HOME/$VNC/

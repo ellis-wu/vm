@@ -4,15 +4,12 @@ import re
 import os
 import os.path
 import sys
-import json
-import logging
-import stat
 import docker
 import time
 import random
-import string
 import cgi
 import subprocess
+import commands
 
 form = cgi.FieldStorage()
 
@@ -80,6 +77,7 @@ if form.getvalue("action") == "import_form":
                                         <input type="text" class="text" name="image" value="" required>
                                         <div class="input_help">The name of a Docker image built from rancher/osbase</div>
                                 </li>
+
                                 <li>
                                         <label class="label "type="label" for="file">File</label>
                                         <div class="upload">
@@ -275,17 +273,37 @@ def get_my_id():
 
 if form.getvalue("action") == "import":
     image = form.getvalue("image")
+    imagetype = form.getvalue("imagetype")
     fileitem = form["filepath"]
 
     def check_image(image):
         if re.compile("[^a-zA-Z\d\-\.\/:]").search(image):
            exit_script("Input validation failed", "Bad image name", 1)
 
+    def get_dockerfile(imagetype):
+        if imagetype == "linux" or imagetype == "windows" or imagetype == "android-x86":
+            return "Dockerfile-" + imagetype
+        else:
+            exit_script("Image validation failed", "Bad image type", 1)
+
     check_image(image)
 
     if fileitem.filename:
         fn = os.path.basename(fileitem.filename)
-        open('/tmp/' + fn, 'wb').write(fileitem.file.read())
+        dockerfile = get_dockerfile(imagetype)
+        path = "/var/lib/rancher/noVNC-0.0.2/docker_images/"
+        open(path + fn, 'wb').write(fileitem.file.read())
+
+        commands.getoutput('cp ' + path + dockerfile + ' ' + path + 'Dockerfile')
+        commands.getoutput('sed -i \'s/{QCOW_IMAGE}/' + fileitem.filename + '/g\' ' + path + 'Dockerfile')
+
+        try:
+            [line for line in docker_client.build(path=path, tag='elliswu/vm-ubuntu:0.0.1', pull=True)]
+        except docker.errors.APIError as e:
+            exit_script("Failed to import image", str(e), 1)
+
+        os.remove(path + 'Dockerfile')
+        os.remove(path + fileitem.filename)
         exit_script("Imported", "Image " + image + " imported", 0)
 
 if form.getvalue("action") == "create":
