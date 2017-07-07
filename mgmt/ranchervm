@@ -342,14 +342,14 @@ if form.getvalue("action") == "create":
             command = kvm_args,
             hostname = hostname,
             detach = True,
-            ports = container_ports)
-
-        docker_client.start(container,
-                            devices=['/dev/kvm:/dev/kvm:rwm',
-                                     '/dev/net/tun:/dev/net/tun:rwm'],
-                            cap_add=['NET_ADMIN'],
-                            port_bindings = port_mappings,
-                            volumes_from = get_my_id())
+            ports = container_ports,
+            host_config = docker_client.create_host_config(
+                port_bindings = port_mappings,
+                cap_add = ['NET_ADMIN'],
+                devices = ['/dev/kvm:/dev/kvm:rwm',
+                           '/dev/net/tun:/dev/net/tun:rwm'],
+                volumes_from = [get_my_id()]))
+        docker_client.start(container)
     except docker.errors.APIError as e:
         exit_script("Failed to create and start", str(e), 1)
     exit_script("Created", "Instance " + hostname + " created", 0)
