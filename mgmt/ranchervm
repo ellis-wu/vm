@@ -77,7 +77,14 @@ if form.getvalue("action") == "import_form":
                                         <input type="text" class="text" name="image" value="" required>
                                         <div class="input_help">The name of a Docker image built from rancher/osbase</div>
                                 </li>
-
+                                <li>
+                                        <label class="label "type="label" for="imagetype">Type</label>
+                                        <select name="imagetype">
+                                                <option value="linux">Linux</option>
+                                                <option value="windows">Windows</option>
+                                                <option value="android-x86">Android-x86</option>
+                                        </select>
+                                </li>
                                 <li>
                                         <label class="label "type="label" for="file">File</label>
                                         <div class="upload">
@@ -278,7 +285,9 @@ if form.getvalue("action") == "import":
 
     def check_image(image):
         if re.compile("[^a-zA-Z\d\-\.\/:]").search(image):
-           exit_script("Input validation failed", "Bad image name", 1)
+            exit_script("Input validation failed", "Bad image name", 1)
+        elif docker_client.images(name=image) is not None:
+            exit_script("Input validation failed", "The image name is existing", 1)
 
     def get_dockerfile(imagetype):
         if imagetype == "linux" or imagetype == "windows" or imagetype == "android-x86":
