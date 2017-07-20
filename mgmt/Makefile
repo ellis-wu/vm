@@ -17,7 +17,7 @@ clean:
 	rm -f noVNC-$(NOVNC_VERSION).tar.gz
 
 tag_latest:
-	docker tag -f $(NAME):$(VERSION) $(NAME):latest
+	docker tag $(NAME):$(VERSION) $(NAME):latest
 
 run:
 	docker run -d -v /var/run:/var/run -p 8081:80 -v /var/lib/rancher/vm:/vm --name $(CONTAINER_NAME) $(NAME):$(VERSION)
