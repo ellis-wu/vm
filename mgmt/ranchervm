@@ -286,7 +286,7 @@ if form.getvalue("action") == "import":
     def check_image(image):
         if re.compile("[^a-zA-Z\d\-\.\/:]").search(image):
             exit_script("Input validation failed", "Bad image name", 1)
-        elif docker_client.images(name=image) is not None:
+        elif docker_client.images(name=image) is None:
             exit_script("Input validation failed", "The image name is existing", 1)
 
     def get_dockerfile(imagetype):
